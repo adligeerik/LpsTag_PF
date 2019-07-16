@@ -1,3 +1,4 @@
+import math
 from random import uniform
 
 
@@ -14,18 +15,26 @@ x,y,z - coordinates
 map - positions of all landmarks (acnchors)
 '''
 class Particle:
-    __init__(self,x,y,z,map)
+    __init__(self,x,y,z,map):
 
         self.x = x
         self.y = y
         self.z = z
-        self.landmarks = []
 
+        self.map = map
+
+        # key = anchor id, val = ddist
+        self.ddistDict = {}
         self.refAnchor = reafAnchor
 
-    for landmark in map:
-        landmark = Ddist(self.x,self.y,self.z,landmark)
-        self.landmarks.append[landmark]
+    def calculateDdist(self):
+        refAnchorDist = math.sqrt(self.x**2 + self.y**2 + self.z**2)
+        for landmark in map:
+            #landmark = Ddist(self.x,self.y,self.z,landmark)
+            #self.landmarks.append[landmark]
+            ddist = math.sqrt((landmark.x-self.x)**2 + (landmark.y-self.y)**2 + (landmark.z-self.z)**2)
+            ddist = dist - refAnchorDist
+            ddistDict[landmarj.id] = [dist]
 
 
 ''' Move particles '''
