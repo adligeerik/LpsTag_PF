@@ -1,21 +1,16 @@
 import math
+import json
+import matplotlib.pyplot as plt
+from mpl_toolkits.mplot3d import Axes3D
 from random import uniform
-
-
-''' ddist class '''
-class Ddist:
-    __init__(self, id, pos):
-        self.id = id
-        self.x = pos.x
-        self.y = pos.y
-        self.z = pos.z
+import numpy as np
 
 ''' Particle Class
 x,y,z - coordinates
 map - positions of all landmarks (acnchors)
 '''
 class Particle:
-    __init__(self,x,y,z,map):
+    def __init__(self,x,y,z,map,reafAnchor):
 
         self.x = x
         self.y = y
@@ -27,14 +22,18 @@ class Particle:
         self.ddistDict = {}
         self.refAnchor = reafAnchor
 
+        self.calculateDdist()
+
     def calculateDdist(self):
         refAnchorDist = math.sqrt(self.x**2 + self.y**2 + self.z**2)
-        for landmark in map:
+        for landmark in self.map:
+            pos = landmark['pos']
+            #print(pos['x'])
             #landmark = Ddist(self.x,self.y,self.z,landmark)
             #self.landmarks.append[landmark]
-            ddist = math.sqrt((landmark.x-self.x)**2 + (landmark.y-self.y)**2 + (landmark.z-self.z)**2)
-            ddist = dist - refAnchorDist
-            ddistDict[landmarj.id] = [dist]
+            ddist = math.sqrt((pos['x']-self.x)**2 + (pos['y']-self.y)**2 + (pos['z']-self.z)**2)
+            ddist = ddist - refAnchorDist
+            self.ddistDict[landmark['addr']] = [ddist]
 
 
 ''' Move particles '''
@@ -62,13 +61,22 @@ def assignWeight(particles):
 m - number of particles
 '''
 def init(numParticles,map,minmax):
+    particles = []
+    
+    for j in range(0,len(map)):
+        #print(map[j])
+        if map[j]["ref_anchor"] == 1:
+            refAnchor = map[j]["addr"] 
+            #print(refAnchor)
+
     for i in range(0,numParticles):
+        #print(i)
+        x = uniform(minmax['maxx'], minmax['minx'])
+        y = uniform(minmax['maxy'], minmax['miny'])
+        z = uniform(minmax['maxz'], minmax['minz'])
 
-        x = uniform(minmax{maxx}, minmax{minx})
-        y = uniform(minmax{maxy}, minmax{miny})
-        z = uniform(minmax{maxz}, minmax{minz})
 
-        particles.append(Particle())
+        particles.append(Particle(x,y,z,map,refAnchor))
     return particles
 
 
@@ -81,7 +89,7 @@ def lowVarianceSampling(particles):
 ''' Particle filter '''
 def particleFilter(particles):
 
-    return particles, mu
+    return (particles, mu)
 
 
 ''' Main
@@ -89,17 +97,34 @@ map - coordinates for landmarks
 '''
 def main():
 
+    #Dummy map
+    mapfile = open("map.json","r")
+    mapstr = mapfile.read()
+    map = json.loads(mapstr)
 
+    #Number of particles 
     numParticles = 100
 
+    #Between what coordinates the particles should be initialized 
     minmax = {
     "maxx":10,
-    "minx":10,
+    "minx":0,
     "maxy":10,
-    "miny":10,
+    "miny":0,
     "maxz":10,
-    "minz":10,
+    "minz":0,
     }
 
-    init(numParticles, map, minmax)
-    while (data):
+    #Init particles
+    particles = init(numParticles, map, minmax)
+
+    ###### For debugg 
+    print(particles[0].ddistDict)
+    fig = plt.figure()
+    ax = fig.add_subplot(111, projection='3d')
+    ######
+
+    while (1):
+        (particles,mu) = particleFilter(particles)
+
+main()
