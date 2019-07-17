@@ -4,6 +4,7 @@ import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
 from random import uniform
 import numpy as np
+import time
 
 ''' Particle Class
 x,y,z - coordinates
@@ -15,6 +16,7 @@ class Particle:
         self.x = x
         self.y = y
         self.z = z
+        self.w = 0
 
         self.map = map
 
@@ -33,7 +35,7 @@ class Particle:
             #self.landmarks.append[landmark]
             ddist = math.sqrt((pos['x']-self.x)**2 + (pos['y']-self.y)**2 + (pos['z']-self.z)**2)
             ddist = ddist - refAnchorDist
-            self.ddistDict[landmark['addr']] = [ddist]
+            self.ddistDict[landmark['addr']] = ddist
 
 
 ''' Move particles '''
@@ -120,11 +122,26 @@ def main():
 
     ###### For debugg 
     print(particles[0].ddistDict)
+    #####
+    
+    # Visualisation
+    plt.ion()
     fig = plt.figure()
     ax = fig.add_subplot(111, projection='3d')
-    ######
-
+    for landmark in map:
+        ax.scatter(landmark["pos"]['x'],landmark["pos"]['y'],landmark["pos"]['z'],c='blue')
+    #plt.show()
     while (1):
         (particles,mu) = particleFilter(particles)
+        
+        for particle in particles:
+            ax.scatter(particle.x,particle.y,particle.z, c='red')
 
+        ax.scatter(mu.x,mu.y,mu.z, c='black')
+
+        fig.canvas.draw()
+        fig.canvas.flush_events()
+        
+
+    
 main()
