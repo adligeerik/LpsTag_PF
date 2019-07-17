@@ -55,7 +55,7 @@ def normalizeWeight(particles):
 
 
 ''' Assign Weight '''
-def assignWeight(particles):
+def assignWeight(particles,measurment):
 
     return particles
 
@@ -90,6 +90,19 @@ def lowVarianceSampling(particles):
 
 ''' Particle filter '''
 def particleFilter(particles):
+
+    #Calculate weight
+    assignWeight(particles,measurment)
+
+    #Normalize weight
+    normalizeWeight(particles)
+
+    #Resample
+    lowVarianceSampling(particles)
+
+    #Move particles
+    moveParticles(particles)    
+
 
     return (particles, mu)
 
