@@ -59,7 +59,7 @@ def normalizeWeight(particles):
 def assignWeight(particles,measurment):
     
     # Is the meausurment
-    mean = 
+    mean = 0
 
     # Needs to be calculated before (or updated during)
     # !!!!!!!! NEEDS TO BE CHANGED !!!!!!!!
@@ -98,6 +98,18 @@ def lowVarianceSampling(particles):
 
     return particles
 
+''' Calculate histogram'''
+def calculateHistogram(particles)
+
+    return histogram
+
+''' Most likely position
+The most likely position of the tag given all the particles'''
+def bestPos(particles)
+
+    histogram = calculateHistogram(particles)
+
+    return mu
 
 ''' Particle filter '''
 def particleFilter(particles):
@@ -114,6 +126,7 @@ def particleFilter(particles):
     #Move particles
     moveParticles(particles)    
 
+    mu = bestPos(particles)
 
     return (particles, mu)
 
