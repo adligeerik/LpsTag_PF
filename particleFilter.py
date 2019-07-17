@@ -2,6 +2,7 @@ import math
 import json
 import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
+from scipy.stats import multivariate_normal
 from random import uniform
 import numpy as np
 import time
@@ -56,7 +57,17 @@ def normalizeWeight(particles):
 
 ''' Assign Weight '''
 def assignWeight(particles,measurment):
+    
+    # Is the meausurment
+    mean = 
 
+    # Needs to be calculated before (or updated during)
+    # !!!!!!!! NEEDS TO BE CHANGED !!!!!!!!
+    cov = [[0.1,0,0],[0,0.1,0],[0,0,0.1]]
+    # !!!!!!!! NEEDS TO BE CHANGED !!!!!!!!
+
+    #Calculates the probability of that particle
+    p = multivariate_normal.pdf(ddist, mean, cov)
     return particles
 
 ''' Init
