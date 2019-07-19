@@ -4,22 +4,17 @@ from math import sqrt
 import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
 
-def objective(x):
-    distance = np.array([[0,1,1,sqrt(2),sqrt(3)],[1,0,sqrt(2),1,sqrt(2)],[1,sqrt(2),0,1,sqrt(2)],[sqrt(2),1,1,0,1],[sqrt(3),sqrt(2),sqrt(2),1,0]])
-    
-    noise = np.array([[1.35865414e-02, 2.03503872e-02, 5.68674466e-02, 6.66487760e-02,
-        6.44043707e-02],
-       [2.44540611e-02, 3.83970580e-02, 5.10788547e-02, 5.17023643e-02,
-        6.79218521e-05],
-       [2.50795239e-02, 9.64046466e-02, 5.97754551e-03, 3.10001477e-02,
-        7.45819149e-02],
-       [7.17065492e-02, 8.07143201e-02, 4.97779901e-02, 2.41304877e-02,
-        8.09613238e-02],
-       [6.74279918e-02, 6.36712012e-02, 2.18220883e-02, 1.72943754e-02,
-        9.92220512e-02]])
+distance = np.array([[0,1,1,sqrt(2),sqrt(3)],[1,0,sqrt(2),1,sqrt(2)],[1,sqrt(2),0,1,sqrt(2)],[sqrt(2),1,1,0,1],[sqrt(3),sqrt(2),sqrt(2),1,0]])
 
+noise = np.array([[1.35865414e-02, 2.03503872e-02, 5.68674466e-02, 6.66487760e-02,6.44043707e-02],
+    [2.44540611e-02, 3.83970580e-02, 5.10788547e-02, 5.17023643e-02,6.79218521e-05],
+    [2.50795239e-02, 9.64046466e-02, 5.97754551e-03, 3.10001477e-02,7.45819149e-02],
+    [7.17065492e-02, 8.07143201e-02, 4.97779901e-02, 2.41304877e-02,8.09613238e-02],
+    [6.74279918e-02, 6.36712012e-02, 2.18220883e-02, 1.72943754e-02,9.92220512e-02]])
 
-    distance = distance + noise
+distance = distance + noise
+
+def objective(x,distance):
 
     x0 = x[0]
     y0 = x[1]
@@ -93,10 +88,10 @@ def constrain5(x):
 def constrain6(x):
     return x[5] 
 
-def distance(x0,x1):
+def distanceCal(x0,x1):
     return(sqrt((x1[0]-x0[0])**2+(x1[1]-x0[1])**2+(x1[2]-z0[2])**2))
 
-#def main():
+
 x0 = [0,0,0,1,0,0,0,1,0,1,1,0,1,1,1]
 
 b = (-10,10)
@@ -111,7 +106,7 @@ const6 = {'type':'eq','fun':constrain6}
 
 cons = [const1,const2,const3,const4,const5,const6]
 
-sol = minimize(objective,x0,method='SLSQP',bounds=bnds,constraints=cons)
+sol = minimize(objective,x0,args=distance,method='SLSQP',bounds=bnds,constraints=cons)
 
 print(sol)
 xcoor = []
@@ -128,6 +123,3 @@ for i in range(0,len(sol.x),3):
     zcoor.append(sol.x[i+2])
     ax.scatter(sol.x[i],sol.x[i+1],sol.x[i+2])
 plt.show()
-
-
-#main()
