@@ -1,0 +1,40 @@
+Unknown anchors in measurement
+	we need a map in every tag (thus every particle will have one).
+
+	we wont get a measurement from every anchor at all time, this 
+	will not be a problem since we only will be using the measurements
+	and corresponding anchors.
+
+	All particles will have a calculated list of ddist for all anchors
+	regardless if they are used or not.
+
+	If we add an anchor in the system we need to update the map 
+
+	The variance is 20 mm and is assumed to be uncorrelated, that is
+	all the ddist are uncorrelated with each other. Thus the Sigma matrix
+	is diagonal. If the filter is not as accurate as one might need to 
+	reevaluate if the measurements are uncorrelated.
+
+How to find the best (most likely) position of the tag
+	Histogram
+
+	Choose the particle with the highest weight
+
+	Calculate the Gauss distribution from all particles (bad if particles
+	are not spread out similar as a Gauss)
+
+Re-sampling 
+	Use low variance resampling
+
+	To avoid wrongly choose a position, do not re-sample if its not needed.
+	That is when we do not have a new measurement or very bad measurement
+	Solution is to re-sample when weight_max/weight_min is greater than 
+	a threshold, or when var(weights) is greater than a threshold
+
+TODO (sort off)
+	Calculate/measure the co-variance of the measurements
+
+	Is the co-variance uncorrelated with all anchors (diagonal matrix) 
+
+	Incorporate the uncertainty of the positions of the anchors in 
+	the weight function 
