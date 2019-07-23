@@ -1,9 +1,9 @@
 import json
 import numpy as np
 import matplotlib.pyplot as plt
+import sys
 
-
-datafile = "ryssdata/log_ddist.txt"
+datafile = sys.argv[1]
 
 numLines = sum(1 for line in open(datafile))
 
