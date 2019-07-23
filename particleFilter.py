@@ -126,7 +126,16 @@ def assignWeight(particles,measurement):
 
     # Needs to be calculated before (or updated during)
     # !!!!!!!! NEEDS TO BE CHANGED !!!!!!!!
-    cov = [[0.2,0,0,0],[0,0.2,0,0],[0,0,0.2,0],[0,0,0,0.2]]
+    variance = 0.2
+    n = len(anchorOrder)
+    cov = [] 
+
+    for i in range(len(anchorOrder)):
+        var = [0]*n
+        var[i]= variance
+        cov.append(var)
+        
+    #cov = [[0.2,0,0,0],[0,0.2,0,0],[0,0,0.2,0],[0,0,0,0.2]]
     # !!!!!!!! NEEDS TO BE CHANGED !!!!!!!!
 
     for particle in particles:
