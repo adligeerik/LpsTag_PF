@@ -110,8 +110,9 @@ def normalizeWeight(particles):
     # Normalization of the weights
     for particle in particles:
         #print(particle.weight)
-        #print(weightSum)
+        print("weightSum: " + str(weightSum))
         particle.weight = particle.weight / weightSum
+        print("particle weight: " + str(particle.weight))
 
 
 
@@ -127,7 +128,7 @@ def assignWeight(particles,measurement):
 
     # Needs to be calculated before (or updated during)
     # !!!!!!!! NEEDS TO BE CHANGED !!!!!!!!
-    variance = 1
+    variance = 1.01
     n = len(anchorOrder)
     cov = [] 
 
@@ -141,11 +142,15 @@ def assignWeight(particles,measurement):
         ddist = []
         for anchor in anchorOrder:
             ddist.append(particle.ddistDict[anchor])
-            
+        
+        #print(ddist)
+        mean = map(float,mean)
+        #print(mean)
         #Calculates the probability of that particle
         p = multivariate_normal.pdf(ddist, mean, cov)
         particle.weight = p
-        print(p)
+        #raw_input("Press Enter to continue...")
+        #print(p)
 
     return particles
 
@@ -247,7 +252,7 @@ def particleFilter(particles,dataPackage):
 
     # Resample
     particles = lowVarianceSampling(particles)
-
+    
     # Move particles
     #moveParticles(particles,acceleration,timestep)    
 
@@ -268,7 +273,7 @@ def main():
 
 
     # Number of particles 
-    numParticles = 10
+    numParticles = 100
 
     # Between what coordinates the particles should be initialized 
     xAnchor = []
@@ -343,6 +348,7 @@ def main():
 
         fig.canvas.draw()
         fig.canvas.flush_events()
+        
         
 
     
