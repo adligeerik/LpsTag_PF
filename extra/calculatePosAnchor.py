@@ -4,6 +4,8 @@ import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
 from scipy.optimize import minimize
 from scipy.optimize import basinhopping
+import json
+
 
 #distance = np.array([[0,1,1,sqrt(2),sqrt(3)],
 #                    [1,0,sqrt(2),1,sqrt(2)],
@@ -15,6 +17,8 @@ from scipy.optimize import basinhopping
 #                    [1,0,sqrt(2),1],
 #                    [1,sqrt(2),0,1],
 #                    [sqrt(2),1,1,0]])
+
+anchors = ["5b3", "611", "4a1b", "4a30"]
 
 #orginal
 distance = np.array([[0,4.395,5.248,6.321],
@@ -97,7 +101,6 @@ for i in range(numNodes*3):
 
 minimizer_kwargs = {"method": "BFGS", "args" : distance}
 
-
 bassol = basinhopping(objective, x0, minimizer_kwargs=minimizer_kwargs,niter=200)
 
 x0 = bassol.x
@@ -105,7 +108,6 @@ x0 = bassol.x
 ##################   Minimize   ##################
 
 sol = minimize(objective,x0,args=distance,method='COBYLA')
-
 
 ##################   Visualization   ##################
 
@@ -124,7 +126,6 @@ for i in range(0,len(sol.x),3):
     ycoor.append(sol.x[i+1])
     zcoor.append(sol.x[i+2])
     ax.scatter(sol.x[i],sol.x[i+1],sol.x[i+2])
-
 
 diff = [max(xcoor) - min(xcoor), max(ycoor) - min(ycoor), max(zcoor) - min(zcoor)]
 
@@ -145,4 +146,26 @@ ax.set_xlim3d(xmean-span,xmean+span)
 ax.set_ylim3d(ymean-span,ymean+span)
 ax.set_zlim3d(zmean-span,zmean+span)
 
+for i, txt in enumerate(anchors):
+    ax.text(xcoor[i], ycoor[i], zcoor[i], txt)
+
+
+##################   Save as Json   ##################
+
+coordinates = {}
+
+for i in range(len(xcoor)):
+    x = xcoor[i]
+    y = ycoor[i]
+    z = zcoor[i]
+
+    coordinates[anchors[i]] = {"x":x,"y":y,"z":z}
+
+with open('coordinates.json', 'w') as fp:
+    json.dump(coordinates, fp,indent=4)
+
+print(coordinates)
+
 plt.show()
+
+
