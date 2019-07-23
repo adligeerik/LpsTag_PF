@@ -3,9 +3,10 @@ import json
 import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
 from scipy.stats import multivariate_normal
-from random import uniform
+from random import uniform, gauss
 import numpy as np
 import time
+from collections import OrderedDict
 
 
 '''{"id":"0x4909","ts":"160253.5610","msgid":3767147,"usb":0,"acc":"[10.27,0.891,0.364]","gyro":"[0.2,0.3,-1.2]","mag":[122,127,215],"ref_anchor":"5b3","meas":[{"addr":"5b3","ddist":"-0.051","tqf":1,"rssi":"-79.0"},{"addr":"4a30","ddist":"1.126","tqf":1,"rssi":"-78.5"},{"addr":"611","ddist":"-1.725","tqf":1,"rssi":"-78.9"}]}'''
@@ -25,14 +26,14 @@ class Particle:
         self.z = z
 
         # Weight of particle (init 0)
-        self.w = 0
+        self.weight = 0
 
         # Coordinates of the anchors in the system (all of them)
         self.map = map
 
         # Dictionary with all ddist for the particle
         # key = anchor id, val = ddist
-        self.ddistDict = {}
+        self.ddistDict = OrderedDict() 
 
         # The id of the master anchor
         self.refAnchor = reafAnchor
@@ -63,15 +64,15 @@ Move particle according to the integral of acceleration
 time between latest measurment and the one before that.
 Dist to move = acceleration * time
 '''
-def moveParticles(particles,measurment):
+def moveParticles(particles,acceleration,timestamp):
 
     # Time difference between this and last measurment
-    timestep = measurment.ts - lastts
+    timestep = 0.1 # timestamp - lastts
 
     # Acceleration in for this measurment
-    ax = measurment['acc'][0]
-    ay = measurment['acc'][1]
-    az = measurment['acc'][2]
+    ax = acceleration[0]
+    ay = acceleration[1]
+    az = acceleration[2]
 
     # Distance to move all particles
     dx = ax*timestep
@@ -79,7 +80,12 @@ def moveParticles(particles,measurment):
     dz = az*timestep
 
     # Variance of the accelerometers measurement
-    varAcc = 0.1
+    varAcc = 5
+
+    for particle in particles:
+        particle.x = particle.x + dx + gauss(0,varAcc)/5
+        particle.y = particle.y + dy + gauss(0,varAcc)/5
+        particle.z = particle.z + dz + gauss(0,varAcc)/5
 
     return 0
 
@@ -99,29 +105,39 @@ def normalizeWeight(particles):
     weightSum = 0
     # Sumation of all weights
     for particle in particles:
-        weightSum = particle.w + weightSum
+        weightSum = particle.weight + weightSum
 
     # Normalization of the weights
     for particle in particles:
-        particle.w = particle.w/ weightSum
+        particle.w = particle.weight/ weightSum
 
     return 0
 
 
 
 ''' Assign Weight '''
-def assignWeight(particles,measurment):
+def assignWeight(particles,measurement):
     
-    # The meausurment
-    mean = 0
+    anchorOrder = []
+    mean = []
+    for anchor in measurement:
+        anchorOrder.append(anchor["addr"])
+        mean.append(anchor["ddist"])
 
     # Needs to be calculated before (or updated during)
     # !!!!!!!! NEEDS TO BE CHANGED !!!!!!!!
-    cov = [[0.02,0,0],[0,0.2,0],[0,0,0.2]]
+    cov = [[0.2,0,0,0],[0,0.2,0,0],[0,0,0.2,0],[0,0,0,0.2]]
     # !!!!!!!! NEEDS TO BE CHANGED !!!!!!!!
 
-    #Calculates the probability of that particle
-    p = multivariate_normal.pdf(ddist, mean, cov)
+    for particle in particles:
+        ddist = []
+        for anchor in anchorOrder:
+            ddist.append(particle.ddistDict[anchor])
+            
+        #Calculates the probability of that particle
+        p = multivariate_normal.pdf(ddist, mean, cov)
+        particle.weight = p
+
     return particles
 
 ''' Init
@@ -166,19 +182,41 @@ def calculateHistogram(particles):
 
     return histogram
 
+
+def highestWeight(particles):
+    bestWeight = 0
+    mu = {}
+    for particle in particles:
+        if particle.weight > bestWeight:
+            bestWeight = particle.weight
+            mu["x"] = particle.x
+            mu["y"] = particle.y
+            mu["z"] = particle.z
+
+    return mu
+
 ''' Most likely position
 The most likely position of the tag given all the particles'''
 def bestPos(particles):
 
-    histogram = calculateHistogram(particles)
-
+    #histogram = calculateHistogram(particles)
+    mu = highestWeight(particles)
     return mu
 
 ''' Particle filter '''
-def particleFilter(particles):
+def particleFilter(particles,dataPackage):
+
+    measurement = dataPackage["meas"]
+    acceleration = dataPackage["acc"]
+    acceleration = acceleration.replace('"','')
+    acceleration = acceleration.replace('[','')
+    acceleration = acceleration.replace(']','')
+    acceleration = acceleration.split(',')
+    acceleration = map(float, acceleration)
+    timestep = dataPackage["ts"]
 
     # Calculate weight
-    assignWeight(particles,measurment)
+    assignWeight(particles,measurement)
 
     # Normalize weight
     normalizeWeight(particles)
@@ -187,7 +225,7 @@ def particleFilter(particles):
     lowVarianceSampling(particles)
 
     # Move particles
-    moveParticles(particles,measurment)    
+    moveParticles(particles,acceleration,timestep)    
 
     mu = bestPos(particles)
 
@@ -202,9 +240,8 @@ def main():
     # Read map
     mapfile = open("extra/coordinates.json","r")
     mapstr = mapfile.read()
-    map = json.loads(mapstr)
+    anchorMap = json.loads(mapstr)
 
-    #print(map["5b3"]["x"])
 
     # Number of particles 
     numParticles = 100
@@ -213,11 +250,12 @@ def main():
     xAnchor = []
     yAnchor = []
     zAnchor = []
-    for i, anchor in enumerate(map):
-        xAnchor.append(map[anchor]["x"])
-        yAnchor.append(map[anchor]["y"])
-        zAnchor.append(map[anchor]["z"])
+    for i, anchor in enumerate(anchorMap):
+        xAnchor.append(anchorMap[anchor]["x"])
+        yAnchor.append(anchorMap[anchor]["y"])
+        zAnchor.append(anchorMap[anchor]["z"])
 
+    # 1.2 is arbitrary choosen
     minmax = {
     "maxx":max(xAnchor)*1.2,
     "minx":min(xAnchor)*1.2,
@@ -228,7 +266,7 @@ def main():
     }
 
     # Init particles
-    particles = init(numParticles, map, minmax)
+    particles = init(numParticles, anchorMap, minmax)
 
     ###### For debugg 
     #print(particles[0])
@@ -258,26 +296,33 @@ def main():
     ax.set_ylim3d(ymean-span,ymean+span)
     ax.set_zlim3d(zmean-span,zmean+span)
 
-    while (1):
+    # Read file with tag data for simulation
+    tagdata = open("tagdata/tagdata.json","r")
+
+    for line in tagdata:
+        ax.clear()
+        ax.set_xlim3d(xmean-span,xmean+span)
+        ax.set_ylim3d(ymean-span,ymean+span)
+        ax.set_zlim3d(zmean-span,zmean+span)
+
+        dataPackage = json.loads(line)
 
         # Draw anchors
-        for i, anchor in enumerate(map):
-            ax.scatter(map[anchor]["x"],map[anchor]["y"],map[anchor]["z"], c='blue')
-            ax.text(map[anchor]["x"],map[anchor]["y"],map[anchor]["z"], anchor)
+        for i, anchor in enumerate(anchorMap):
+            ax.scatter(anchorMap[anchor]["x"],anchorMap[anchor]["y"],anchorMap[anchor]["z"], c='blue')
+            ax.text(anchorMap[anchor]["x"],anchorMap[anchor]["y"],anchorMap[anchor]["z"], anchor)
         
         # Call the particle filter
-        #(particles,mu) = particleFilter(particles)
+        (particles,mu) = particleFilter(particles,dataPackage)
         
         # Display the particles and anchors 
         for particle in particles:
             ax.scatter(particle.x,particle.y,particle.z, c='red')
 
-        #ax.scatter(mu["x"],mu["y"],mu["z"], c='black')
-
+        ax.scatter(mu["x"],mu["y"],mu["z"], c='black')
 
         fig.canvas.draw()
         fig.canvas.flush_events()
-        a = input
         
 
     
