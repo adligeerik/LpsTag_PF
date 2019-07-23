@@ -67,7 +67,7 @@ Dist to move = acceleration * time
 def moveParticles(particles,acceleration,timestamp):
 
     # Time difference between this and last measurment
-    timestep = 0.1 # timestamp - lastts
+    timestep = 0.001 # timestamp - lastts
 
     # Acceleration in for this measurment
     ax = acceleration[0]
@@ -80,12 +80,12 @@ def moveParticles(particles,acceleration,timestamp):
     dz = az*timestep
 
     # Variance of the accelerometers measurement
-    varAcc = 5
+    varAcc = 1
 
     for particle in particles:
-        particle.x = particle.x + dx + gauss(0,varAcc)/5
-        particle.y = particle.y + dy + gauss(0,varAcc)/5
-        particle.z = particle.z + dz + gauss(0,varAcc)/5
+        particle.x = particle.x + dx + gauss(0,varAcc)/10
+        particle.y = particle.y + dy + gauss(0,varAcc)/10
+        particle.z = particle.z + dz + gauss(0,varAcc)/10
 
     return 0
 
@@ -109,9 +109,10 @@ def normalizeWeight(particles):
 
     # Normalization of the weights
     for particle in particles:
-        particle.w = particle.weight/ weightSum
+        #print(particle.weight)
+        #print(weightSum)
+        particle.weight = particle.weight / weightSum
 
-    return 0
 
 
 
@@ -126,7 +127,7 @@ def assignWeight(particles,measurement):
 
     # Needs to be calculated before (or updated during)
     # !!!!!!!! NEEDS TO BE CHANGED !!!!!!!!
-    variance = 0.2
+    variance = 1
     n = len(anchorOrder)
     cov = [] 
 
@@ -134,8 +135,6 @@ def assignWeight(particles,measurement):
         var = [0]*n
         var[i]= variance
         cov.append(var)
-        
-    #cov = [[0.2,0,0,0],[0,0.2,0,0],[0,0,0.2,0],[0,0,0,0.2]]
     # !!!!!!!! NEEDS TO BE CHANGED !!!!!!!!
 
     for particle in particles:
@@ -146,6 +145,7 @@ def assignWeight(particles,measurement):
         #Calculates the probability of that particle
         p = multivariate_normal.pdf(ddist, mean, cov)
         particle.weight = p
+        print(p)
 
     return particles
 
@@ -184,7 +184,22 @@ def init(numParticles,map,minmax):
 ''' Low variance sampling '''
 def lowVarianceSampling(particles):
 
-    return particles
+    newParticles = []
+
+    M = len(particles)
+    r = uniform(0,1/M)
+    inM = 1/M
+    c = particles[0].weight
+    i = 0
+    for m in range(M):
+        U = r + (m-1)*inM
+        while( U > c ):
+            i = i + 1
+            c = c + particles[i].weight
+        newParticles.append(particles[i])
+
+    return(newParticles)
+
 
 ''' Calculate histogram'''
 def calculateHistogram(particles):
@@ -231,10 +246,10 @@ def particleFilter(particles,dataPackage):
     normalizeWeight(particles)
 
     # Resample
-    lowVarianceSampling(particles)
+    particles = lowVarianceSampling(particles)
 
     # Move particles
-    moveParticles(particles,acceleration,timestep)    
+    #moveParticles(particles,acceleration,timestep)    
 
     mu = bestPos(particles)
 
@@ -253,7 +268,7 @@ def main():
 
 
     # Number of particles 
-    numParticles = 100
+    numParticles = 10
 
     # Between what coordinates the particles should be initialized 
     xAnchor = []
@@ -276,10 +291,6 @@ def main():
 
     # Init particles
     particles = init(numParticles, anchorMap, minmax)
-
-    ###### For debugg 
-    #print(particles[0])
-    #####
     
     # Visualisation
     plt.ion()
