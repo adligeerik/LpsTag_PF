@@ -159,7 +159,7 @@ for i in range(len(xcoor)):
     y = ycoor[i]
     z = zcoor[i]
 
-    coordinates[anchors[i]] = {"x":x,"y":y,"z":z}
+    coordinates[anchors[i]] = {"x":x,"y":y,"z":z,"ref_anchor": 0,}
 
 with open('coordinates.json', 'w') as fp:
     json.dump(coordinates, fp,indent=4)

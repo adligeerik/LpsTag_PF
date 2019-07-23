@@ -45,9 +45,9 @@ class Particle:
         refAnchorDist = math.sqrt(self.x**2 + self.y**2 + self.z**2)
 
         # Calculate the ddist to all other anchors. ddist is the difference in lenght from the ref_anchor to another anchor.
-        for landmark in self.map:
+        for anchor in self.map:
             # Coordinate for that anchor (landmark)
-            pos = landmark['pos']
+            pos = self.map[anchor]
             #print(pos['x'])
             #landmark = Ddist(self.x,self.y,self.z,landmark)
             #self.landmarks.append[landmark]
@@ -55,7 +55,7 @@ class Particle:
             # Euclidean distance differnece from with regards to the ref_anchor
             ddist = math.sqrt((pos['x']-self.x)**2 + (pos['y']-self.y)**2 + (pos['z']-self.z)**2)
             ddist = ddist - refAnchorDist
-            self.ddistDict[landmark['addr']] = ddist
+            self.ddistDict[anchor] = ddist
 
 
 ''' Move particles 
@@ -84,7 +84,7 @@ def moveParticles(particles,measurment):
     return 0
 
 ''' Update map in particles'''
-def updateMap(particles)
+def updateMap(particles):
     return 0
 
 ''' Calculate ddist '''
@@ -131,9 +131,9 @@ def init(numParticles,map,minmax):
     particles = []
     
     # Search for the refernace anchor
-    for j in range(0,len(map)):
-        if map[j]["ref_anchor"] == 1:
-            refAnchor = map[j]["addr"] 
+    for i, anchor in enumerate(map):
+        if map[anchor]["ref_anchor"] == 1:
+            refAnchor = anchor 
             
 
     # Init uniform random position for all particles
@@ -143,7 +143,12 @@ def init(numParticles,map,minmax):
         z = uniform(minmax['maxz'], minmax['minz'])
 
         # Create a particle
-        particle = Particle(x,y,z,map,refAnchor)
+        try:
+            particle = Particle(x,y,z,map,refAnchor)
+        except UnboundLocalError:
+            print(UnboundLocalError)
+            print("\n Problaby no ref_anchor in map \n")
+
 
         # Add particle
         particles.append(particle)
@@ -157,13 +162,13 @@ def lowVarianceSampling(particles):
     return particles
 
 ''' Calculate histogram'''
-def calculateHistogram(particles)
+def calculateHistogram(particles):
 
     return histogram
 
 ''' Most likely position
 The most likely position of the tag given all the particles'''
-def bestPos(particles)
+def bestPos(particles):
 
     histogram = calculateHistogram(particles)
 
@@ -194,50 +199,85 @@ map - coordinates for landmarks
 '''
 def main():
 
-    # Dummy map
-    mapfile = open("map.json","r")
+    # Read map
+    mapfile = open("extra/coordinates.json","r")
     mapstr = mapfile.read()
     map = json.loads(mapstr)
+
+    #print(map["5b3"]["x"])
 
     # Number of particles 
     numParticles = 100
 
     # Between what coordinates the particles should be initialized 
+    xAnchor = []
+    yAnchor = []
+    zAnchor = []
+    for i, anchor in enumerate(map):
+        xAnchor.append(map[anchor]["x"])
+        yAnchor.append(map[anchor]["y"])
+        zAnchor.append(map[anchor]["z"])
+
     minmax = {
-    "maxx":10,
-    "minx":0,
-    "maxy":10,
-    "miny":0,
-    "maxz":10,
-    "minz":0,
+    "maxx":max(xAnchor)*1.2,
+    "minx":min(xAnchor)*1.2,
+    "maxy":max(yAnchor)*1.2,
+    "miny":min(yAnchor)*1.2,
+    "maxz":max(zAnchor)*1.2,
+    "minz":min(zAnchor)*1.2,
     }
 
     # Init particles
     particles = init(numParticles, map, minmax)
 
     ###### For debugg 
-    print(particles[0].ddistDict)
+    #print(particles[0])
     #####
     
     # Visualisation
     plt.ion()
     fig = plt.figure()
     ax = fig.add_subplot(111, projection='3d')
-    for landmark in map:
-        ax.scatter(landmark["pos"]['x'],landmark["pos"]['y'],landmark["pos"]['z'],c='blue')
-    #plt.show()
 
+    diff = [max(xAnchor) - min(xAnchor), max(yAnchor) - min(yAnchor), max(zAnchor) - min(zAnchor)]
+
+    if diff.index(max(diff)) == 0:
+        span = (diff[0]/2)*1.2
+
+    if diff.index(max(diff)) == 1:
+        span = (diff[1]/2)*1.2
+
+    if diff.index(max(diff)) == 2:
+        span = (diff[2]/2)*1.2
+
+    xmean = np.mean(xAnchor)
+    ymean = np.mean(yAnchor)
+    zmean = np.mean(zAnchor)
+
+    ax.set_xlim3d(xmean-span,xmean+span)
+    ax.set_ylim3d(ymean-span,ymean+span)
+    ax.set_zlim3d(zmean-span,zmean+span)
 
     while (1):
+
+        # Draw anchors
+        for i, anchor in enumerate(map):
+            ax.scatter(map[anchor]["x"],map[anchor]["y"],map[anchor]["z"], c='blue')
+            ax.text(map[anchor]["x"],map[anchor]["y"],map[anchor]["z"], anchor)
+        
         # Call the particle filter
-        (particles,mu) = particleFilter(particles)
+        #(particles,mu) = particleFilter(particles)
         
         # Display the particles and anchors 
         for particle in particles:
             ax.scatter(particle.x,particle.y,particle.z, c='red')
-        ax.scatter(mu.x,mu.y,mu.z, c='black')
+
+        #ax.scatter(mu["x"],mu["y"],mu["z"], c='black')
+
+
         fig.canvas.draw()
         fig.canvas.flush_events()
+        a = input
         
 
     
