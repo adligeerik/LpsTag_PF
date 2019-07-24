@@ -7,10 +7,10 @@ from random import uniform, gauss
 import numpy as np
 import time
 from collections import OrderedDict
+import copy
 
 
 '''{"id":"0x4909","ts":"160253.5610","msgid":3767147,"usb":0,"acc":"[10.27,0.891,0.364]","gyro":"[0.2,0.3,-1.2]","mag":[122,127,215],"ref_anchor":"5b3","meas":[{"addr":"5b3","ddist":"-0.051","tqf":1,"rssi":"-79.0"},{"addr":"4a30","ddist":"1.126","tqf":1,"rssi":"-78.5"},{"addr":"611","ddist":"-1.725","tqf":1,"rssi":"-78.9"}]}'''
-
 
 
 ''' Particle Class
@@ -49,9 +49,6 @@ class Particle:
         for anchor in self.map:
             # Coordinate for that anchor (landmark)
             pos = self.map[anchor]
-            #print(pos['x'])
-            #landmark = Ddist(self.x,self.y,self.z,landmark)
-            #self.landmarks.append[landmark]
 
             # Euclidean distance differnece from with regards to the ref_anchor
             ddist = math.sqrt((pos['x']-self.x)**2 + (pos['y']-self.y)**2 + (pos['z']-self.z)**2)
@@ -70,9 +67,13 @@ def moveParticles(particles,acceleration,timestamp):
     timestep = 0.001 # timestamp - lastts
 
     # Acceleration in for this measurment
-    ax = acceleration[0]
-    ay = acceleration[1]
-    az = acceleration[2]
+    #ax = acceleration[0]
+    #ay = acceleration[1]
+    #az = acceleration[2]
+
+    ax = gauss(0,0.01)/10
+    ay = gauss(0,0.01)/10
+    az = gauss(0,0.01)/10
 
     # Distance to move all particles
     dx = ax*timestep
@@ -95,8 +96,9 @@ def updateMap(particles):
 
 ''' Calculate ddist '''
 def updateDdist(particles):
-
-    return particles
+    for particle in particles:
+        particle.calculateDdist()
+    
 
 ''' Normalize weight 
 Calculates the sum of all weights and normalize the weight for all particles'''
@@ -109,11 +111,11 @@ def normalizeWeight(particles):
 
     # Normalization of the weights
     for particle in particles:
-        #print(particle.weight)
-        print("weightSum: " + str(weightSum))
         particle.weight = particle.weight / weightSum
-        print("particle weight: " + str(particle.weight))
 
+    weightSum = 0
+    for particle in particles:
+        weightSum = particle.weight + weightSum
 
 
 
@@ -128,7 +130,7 @@ def assignWeight(particles,measurement):
 
     # Needs to be calculated before (or updated during)
     # !!!!!!!! NEEDS TO BE CHANGED !!!!!!!!
-    variance = 1.01
+    variance = 0.2
     n = len(anchorOrder)
     cov = [] 
 
@@ -143,14 +145,12 @@ def assignWeight(particles,measurement):
         for anchor in anchorOrder:
             ddist.append(particle.ddistDict[anchor])
         
-        #print(ddist)
+        
         mean = map(float,mean)
-        #print(mean)
+
         #Calculates the probability of that particle
         p = multivariate_normal.pdf(ddist, mean, cov)
         particle.weight = p
-        #raw_input("Press Enter to continue...")
-        #print(p)
 
     return particles
 
@@ -192,24 +192,19 @@ def lowVarianceSampling(particles):
     newParticles = []
 
     M = len(particles)
-    r = uniform(0,1/M)
-    inM = 1/M
+    r = uniform(0,1.0/M)
+    inM = 1.0/M
     c = particles[0].weight
     i = 0
     for m in range(M):
-        U = r + (m-1)*inM
+        U = r + m*inM
         while( U > c ):
             i = i + 1
             c = c + particles[i].weight
-        newParticles.append(particles[i])
+        newParticles.append(copy.deepcopy(particles[i]))
 
     return(newParticles)
 
-
-''' Calculate histogram'''
-def calculateHistogram(particles):
-
-    return histogram
 
 
 def highestWeight(particles):
@@ -254,7 +249,9 @@ def particleFilter(particles,dataPackage):
     particles = lowVarianceSampling(particles)
     
     # Move particles
-    #moveParticles(particles,acceleration,timestep)    
+    moveParticles(particles,acceleration,timestep)    
+
+    updateDdist(particles)
 
     mu = bestPos(particles)
 
@@ -284,7 +281,7 @@ def main():
         yAnchor.append(anchorMap[anchor]["y"])
         zAnchor.append(anchorMap[anchor]["z"])
 
-    # 1.2 is arbitrary choosen
+    # 1.2 is arbitrary choosen to have some particles outside of the anchors
     minmax = {
     "maxx":max(xAnchor)*1.2,
     "minx":min(xAnchor)*1.2,
@@ -340,16 +337,16 @@ def main():
         # Call the particle filter
         (particles,mu) = particleFilter(particles,dataPackage)
         
-        # Display the particles and anchors 
+        # Display the particles
         for particle in particles:
             ax.scatter(particle.x,particle.y,particle.z, c='red')
 
-        ax.scatter(mu["x"],mu["y"],mu["z"], c='black')
+        ax.scatter(mu["x"],mu["y"],mu["z"], c='green')
 
         fig.canvas.draw()
         fig.canvas.flush_events()
-        
-        
+        #raw_input("Press Enter to continue...")
 
-    
+
+
 main()
