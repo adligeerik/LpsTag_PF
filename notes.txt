@@ -38,3 +38,6 @@ TODO (sort off)
 
 	Incorporate the uncertainty of the positions of the anchors in 
 	the weight function 
+
+	Remove particles with too small weight and introduce them randomly 
+	somewhere else
