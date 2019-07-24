@@ -71,9 +71,9 @@ def moveParticles(particles,acceleration,timestamp):
     #ay = acceleration[1]
     #az = acceleration[2]
 
-    ax = gauss(0,0.01)/10
-    ay = gauss(0,0.01)/10
-    az = gauss(0,0.01)/10
+    ax = gauss(0,0.01)/14
+    ay = gauss(0,0.01)/14
+    az = gauss(0,0.01)/14
 
     # Distance to move all particles
     dx = ax*timestep
@@ -130,7 +130,7 @@ def assignWeight(particles,measurement):
 
     # Needs to be calculated before (or updated during)
     # !!!!!!!! NEEDS TO BE CHANGED !!!!!!!!
-    variance = 0.2
+    variance = 0.002
     n = len(anchorOrder)
     cov = [] 
 
@@ -270,7 +270,7 @@ def main():
 
 
     # Number of particles 
-    numParticles = 100
+    numParticles = 1000
 
     # Between what coordinates the particles should be initialized 
     xAnchor = []
@@ -338,8 +338,8 @@ def main():
         (particles,mu) = particleFilter(particles,dataPackage)
         
         # Display the particles
-        for particle in particles:
-            ax.scatter(particle.x,particle.y,particle.z, c='red')
+        #for particle in particles:
+        #    ax.scatter(particle.x,particle.y,particle.z, c='red')
 
         ax.scatter(mu["x"],mu["y"],mu["z"], c='green')
 

@@ -2,6 +2,7 @@ import json
 import numpy as np
 import matplotlib.pyplot as plt
 import sys
+from decimal import Decimal
 
 datafile = sys.argv[1]
 
@@ -41,7 +42,12 @@ for index, line in enumerate(file):
 
 colors = ['blue', 'red','yellow','black','purple','green','Orange','black']
 for index,key in enumerate(dataDict.keys()):
-    plt.plot(dataDict[key],label=key,color=colors[index])
+    datan = [x for x in dataDict[key] if x is not None]
+    data = map(float,datan)
+    var = str(np.var(data))
+    mean = str(np.mean(data))
+    plt.plot(dataDict[key],label=key+", var: "+var[0:7] +", mean: "+mean[0:7],color=colors[index])
     plt.legend(loc='upper left')
+    
 #plt.plot(dataDict["4930"])
 plt.show()
