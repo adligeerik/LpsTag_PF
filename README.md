@@ -22,3 +22,7 @@
 * Measurements are normal distributed
 * The tag will have had the same acceleration from the previous measurement until the latest measurement
 * Accelerometer has the same variance for all axis 
+
+
+## Miscellaneous
+If all anchors are in or close to be in the same plane, the tag will have a good estimate of the position in that plane, but not in the third axis perpendicular from the plane.

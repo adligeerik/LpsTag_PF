@@ -64,16 +64,16 @@ Dist to move = acceleration * time
 def moveParticles(particles,acceleration,timestamp):
 
     # Time difference between this and last measurment
-    timestep = 0.001 # timestamp - lastts
+    timestep = 0 # timestamp - lastts
 
     # Acceleration in for this measurment
     #ax = acceleration[0]
     #ay = acceleration[1]
     #az = acceleration[2]
 
-    ax = gauss(0,0.01)/14
-    ay = gauss(0,0.01)/14
-    az = gauss(0,0.01)/14
+    ax = gauss(0,1.0)/10
+    ay = gauss(0,1.0)/10
+    az = gauss(0,1.0)/10
 
     # Distance to move all particles
     dx = ax*timestep
@@ -84,9 +84,9 @@ def moveParticles(particles,acceleration,timestamp):
     varAcc = 1
 
     for particle in particles:
-        particle.x = particle.x + dx + gauss(0,varAcc)/10
-        particle.y = particle.y + dy + gauss(0,varAcc)/10
-        particle.z = particle.z + dz + gauss(0,varAcc)/10
+        particle.x = particle.x + dx + gauss(0,varAcc)/15
+        particle.y = particle.y + dy + gauss(0,varAcc)/15
+        particle.z = particle.z + dz + gauss(0,varAcc)/15
 
     return 0
 
@@ -112,10 +112,6 @@ def normalizeWeight(particles):
     # Normalization of the weights
     for particle in particles:
         particle.weight = particle.weight / weightSum
-
-    weightSum = 0
-    for particle in particles:
-        weightSum = particle.weight + weightSum
 
 
 
@@ -161,7 +157,7 @@ def init(numParticles,map,minmax):
     particles = []
     
     # Search for the refernace anchor
-    for i, anchor in enumerate(map):
+    for anchor in map:
         if map[anchor]["ref_anchor"] == 1:
             refAnchor = anchor 
             
@@ -178,7 +174,6 @@ def init(numParticles,map,minmax):
         except UnboundLocalError:
             print(UnboundLocalError)
             print("\n Problaby no ref_anchor in map \n")
-
 
         # Add particle
         particles.append(particle)
@@ -206,7 +201,8 @@ def lowVarianceSampling(particles):
     return(newParticles)
 
 
-
+''' Chooses the particle with the highest weight
+'''
 def highestWeight(particles):
     bestWeight = 0
     mu = {}
@@ -219,18 +215,41 @@ def highestWeight(particles):
 
     return mu
 
+''' Calulcates the mean coordinate of all particles
+'''
+def meanPos(particles):
+    mu = {}
+    mu["x"] = 0
+    mu["y"] = 0
+    mu["z"] = 0
+    for particle in particles:
+        mu["x"] = particle.x + mu["x"]
+        mu["y"] = particle.y + mu["y"]
+        mu["z"] = particle.z + mu["z"]
+
+    M = len(particles)
+
+    mu["x"] = mu["x"]/M
+    mu["y"] = mu["y"]/M
+    mu["z"] = mu["z"]/M
+
+    return mu
+
+
 ''' Most likely position
 The most likely position of the tag given all the particles'''
 def bestPos(particles):
-
-    #histogram = calculateHistogram(particles)
-    mu = highestWeight(particles)
+    #mu = highestWeight(particles)
+    mu = meanPos(particles)
     return mu
 
 ''' Particle filter '''
 def particleFilter(particles,dataPackage):
 
+
     measurement = dataPackage["meas"]
+
+    # Converts string list to float list
     acceleration = dataPackage["acc"]
     acceleration = acceleration.replace('"','')
     acceleration = acceleration.replace('[','')
@@ -251,8 +270,10 @@ def particleFilter(particles,dataPackage):
     # Move particles
     moveParticles(particles,acceleration,timestep)    
 
+    # Updates the ddist for all particles
     updateDdist(particles)
 
+    # Gives a extimated position from the particles
     mu = bestPos(particles)
 
     return (particles, mu)
@@ -276,7 +297,7 @@ def main():
     xAnchor = []
     yAnchor = []
     zAnchor = []
-    for i, anchor in enumerate(anchorMap):
+    for anchor in anchorMap:
         xAnchor.append(anchorMap[anchor]["x"])
         yAnchor.append(anchorMap[anchor]["y"])
         zAnchor.append(anchorMap[anchor]["z"])
@@ -314,6 +335,7 @@ def main():
     ymean = np.mean(yAnchor)
     zmean = np.mean(zAnchor)
 
+    # Set limit for axes 
     ax.set_xlim3d(xmean-span,xmean+span)
     ax.set_ylim3d(ymean-span,ymean+span)
     ax.set_zlim3d(zmean-span,zmean+span)
@@ -345,7 +367,6 @@ def main():
 
         fig.canvas.draw()
         fig.canvas.flush_events()
-        #raw_input("Press Enter to continue...")
 
 
 
