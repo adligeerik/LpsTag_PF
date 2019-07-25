@@ -84,9 +84,9 @@ def moveParticles(particles,acceleration,timestamp):
     varAcc = 1
 
     for particle in particles:
-        particle.x = particle.x + dx + gauss(0,varAcc)/15
-        particle.y = particle.y + dy + gauss(0,varAcc)/15
-        particle.z = particle.z + dz + gauss(0,varAcc)/15
+        particle.x = particle.x + dx + gauss(0,varAcc)/10
+        particle.y = particle.y + dy + gauss(0,varAcc)/10
+        particle.z = particle.z + dz + gauss(0,varAcc)/10
 
     return 0
 
@@ -126,7 +126,7 @@ def assignWeight(particles,measurement):
 
     # Needs to be calculated before (or updated during)
     # !!!!!!!! NEEDS TO BE CHANGED !!!!!!!!
-    variance = 0.002
+    variance = 0.02
     n = len(anchorOrder)
     cov = [] 
 
@@ -135,7 +135,7 @@ def assignWeight(particles,measurement):
         var[i]= variance
         cov.append(var)
     # !!!!!!!! NEEDS TO BE CHANGED !!!!!!!!
-
+    highP = 0
     for particle in particles:
         ddist = []
         for anchor in anchorOrder:
@@ -147,7 +147,9 @@ def assignWeight(particles,measurement):
         #Calculates the probability of that particle
         p = multivariate_normal.pdf(ddist, mean, cov)
         particle.weight = p
-
+        if p > highP:
+            highP = p
+    print("highest p: " + str(highP))
     return particles
 
 ''' Init
@@ -246,16 +248,19 @@ def bestPos(particles):
 ''' Particle filter '''
 def particleFilter(particles,dataPackage):
 
+    try:
+        measurement = dataPackage["meas"]
 
-    measurement = dataPackage["meas"]
-
-    # Converts string list to float list
-    acceleration = dataPackage["acc"]
-    acceleration = acceleration.replace('"','')
-    acceleration = acceleration.replace('[','')
-    acceleration = acceleration.replace(']','')
-    acceleration = acceleration.split(',')
-    acceleration = map(float, acceleration)
+        # Converts string list to float list
+        acceleration = dataPackage["acc"]
+        acceleration = acceleration.replace('"','')
+        acceleration = acceleration.replace('[','')
+        acceleration = acceleration.replace(']','')
+        acceleration = acceleration.split(',')
+        acceleration = map(float, acceleration)
+    except KeyError:
+        mu = bestPos(particles)
+        return (particles, mu)
     timestep = dataPackage["ts"]
 
     # Calculate weight
@@ -291,7 +296,7 @@ def main():
 
 
     # Number of particles 
-    numParticles = 1000
+    numParticles = 100
 
     # Between what coordinates the particles should be initialized 
     xAnchor = []
@@ -341,16 +346,22 @@ def main():
     ax.set_zlim3d(zmean-span,zmean+span)
 
     # Read file with tag data for simulation
-    tagdata = open("tagdata/tagdata.json","r")
+    tagdata = open("extra/batmovetagdataall.json","r")
 
-    for line in tagdata:
+    coord = [[],[],[]]
+    variance = [[],[],[]]
+    for index,line in enumerate(tagdata):
+        print("index: "+str(index))
         ax.clear()
         ax.set_xlim3d(xmean-span,xmean+span)
         ax.set_ylim3d(ymean-span,ymean+span)
         ax.set_zlim3d(zmean-span,zmean+span)
 
-        dataPackage = json.loads(line)
-
+        try:
+            dataPackage = json.loads(line)
+        except ValueError:
+            continue
+        
         # Draw anchors
         for i, anchor in enumerate(anchorMap):
             ax.scatter(anchorMap[anchor]["x"],anchorMap[anchor]["y"],anchorMap[anchor]["z"], c='blue')
@@ -363,11 +374,42 @@ def main():
         #for particle in particles:
         #    ax.scatter(particle.x,particle.y,particle.z, c='red')
 
+        xpos = []
+        ypos = []
+        zpos = []
+        for particle in particles:
+            xpos.append(particle.x)
+            ypos.append(particle.y)
+            zpos.append(particle.z)
+        xvar = np.var(xpos)
+        yvar = np.var(ypos)
+        zvar = np.var(zpos)
+
+        print("Variance, x: "+str(xvar)+", y: "+str(yvar)+", z: "+str(zvar))
+
         ax.scatter(mu["x"],mu["y"],mu["z"], c='green')
+
+        coord[0].append(mu["x"])
+        coord[1].append(mu["y"])
+        coord[2].append(mu["z"])
+
+        variance[0].append(xvar)
+        variance[1].append(yvar)
+        variance[2].append(zvar)
 
         fig.canvas.draw()
         fig.canvas.flush_events()
 
 
+    ax.plot(coord[0],coord[1],coord[2], c='green')
+    fig.canvas.draw()
 
+    fig1 = plt.figure()
+    ax1 = fig1.add_subplot(111)
+    ax1.plot(variance[0],label="var x")
+    ax1.plot(variance[1],label="var y")
+    ax1.plot(variance[2],label="var z")
+    ax1.legend()
+    #fig1.show()
+    
 main()
