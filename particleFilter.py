@@ -24,11 +24,15 @@ def calculateDdist(particle, anchorMap):
         # Coordinate for that anchor (landmark)
         pos = anchorMap[anchor]
 
+        if pos['ref_anchor'] == 1:
+            ddistDict[anchor] = 0
+            continue
+
         # Euclidean distance differnece from with regards to the ref_anchor
         ddist = math.sqrt((pos['x']-particle[0]**2)**2 + (pos['y']-particle[1]**2)**2 + (pos['z']-particle[2]**2)**2)
         ddist = ddist - refAnchorDist
         ddistDict[anchor] = ddist
-
+    
     return ddistDict
 
 
@@ -64,7 +68,6 @@ def moveParticles(particles,acceleration,timestamp):
         particle[1] = particle[1] + dy + gauss(0,varAcc)/10
         particle[2] = particle[2] + dz + gauss(0,varAcc)/10
 
-    return 0
 
 ''' Update map in particles'''
 def updateMap(particles):
@@ -120,8 +123,8 @@ def assignWeight(particles,anchorMap,measurement):
         particle[3] = p
         if p > highP:
             highP = p
-    print("highest p: " + str(highP))
-    return particles
+    #print("highest p: " + str(highP))
+    return highP
 
 ''' Init
 m - number of particles
@@ -169,7 +172,7 @@ def lowVarianceSampling(particles):
         while( U > c ):
             i = i + 1
             c = c + particles[i][3]
-        newParticles.append(copy.deepcopy(particles[i]))
+        newParticles.append([particles[i][0],particles[i][1],particles[i][2],particles[i][3]])
 
     return(newParticles)
 
@@ -248,12 +251,13 @@ def particleFilter(particles,anchorMap,dataPackage):
         acceleration = acceleration.split(',')
         acceleration = map(float, acceleration)
     except KeyError:
+        print(KeyError)
         mu = bestPos(particles)
-        return (particles, mu)
+        return (particles, mu,None)
     timestep = dataPackage["ts"]
 
     # Calculate weight
-    assignWeight(particles,anchorMap,measurement)
+    pHigh = assignWeight(particles,anchorMap,measurement)
 
     # Normalize weight
     normalizeWeight(particles)
@@ -267,7 +271,7 @@ def particleFilter(particles,anchorMap,dataPackage):
     # Gives a extimated position from the particles
     mu = bestPos(particles)
 
-    return (particles, mu)
+    return (particles, mu, pHigh)
 
 
 ''' Main
@@ -282,7 +286,7 @@ def main():
 
 
     # Number of particles 
-    numParticles = 100
+    numParticles = 1000
 
     # Between what coordinates the particles should be initialized 
     xAnchor = []
@@ -336,7 +340,10 @@ def main():
 
     coord = [[],[],[]]
     variance = [[],[],[]]
+    pHigh = []
+
     for index,line in enumerate(tagdata):
+        
         print("index: "+str(index))
         ax.clear()
         ax.set_xlim3d(xmean-span,xmean+span)
@@ -346,6 +353,7 @@ def main():
         try:
             dataPackage = json.loads(line)
         except ValueError:
+            print(ValueError)
             continue
         
         # Draw anchors
@@ -354,7 +362,7 @@ def main():
         #    ax.text(anchorMap[anchor]["x"],anchorMap[anchor]["y"],anchorMap[anchor]["z"], anchor)
         
         # Call the particle filter
-        (particles,mu) = particleFilter(particles,anchorMap,dataPackage)
+        (particles,mu,pHighest) = particleFilter(particles,anchorMap,dataPackage)
         
         # Display the particles
         #for particle in particles:
@@ -383,12 +391,16 @@ def main():
         variance[1].append(yvar)
         variance[2].append(zvar)
 
+        pHigh.append(pHighest)
+        print("highest p: " + str(pHighest))
+
         fig.canvas.draw()
         fig.canvas.flush_events()
 
         if index > 4000:
             break
 
+    tagdata.close()
 
     for i, anchor in enumerate(anchorMap):
         ax.scatter(anchorMap[anchor]["x"],anchorMap[anchor]["y"],anchorMap[anchor]["z"], c='blue')
@@ -403,6 +415,11 @@ def main():
     ax1.plot(variance[1],label="var y")
     ax1.plot(variance[2],label="var z")
     ax1.legend()
+
+    fig2 = plt.figure()
+    ax2 = fig2.add_subplot(111)
+    ax2.plot(pHigh,label="highest probability")
+    ax2.legend()
     #fig1.show()
     
 main()
