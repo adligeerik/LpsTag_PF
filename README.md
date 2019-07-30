@@ -1,7 +1,14 @@
 # Particle filter for lps tag (proof of concept)
 
+# How to use
+To run the particle filter use:
+```
+python particlefilter.py
+```
+Make sure that the path to the map of anchors is in the script main function as well as the file with samples from a tag.
 
-## Flow
+
+## Algorithm
 1. Get map with anchors (possible to add and remove under ongoing process)
 2. Init m particles uniformly on the map ··
 ···Particles will have:··
@@ -26,3 +33,10 @@
 
 ## Miscellaneous
 If all anchors are in or close to be in the same plane, the tag will have a good estimate of the position in that plane, but not in the third axis perpendicular from the plane.
+
+
+## Results
+
+![](images/particle.gif)
+
+The tag is hanging slightly above the plane the anchors are in. Blue points are anchors, red are the estimated states "particles" and the green is the particle with the highest probability
