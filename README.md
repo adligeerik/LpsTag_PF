@@ -56,4 +56,3 @@ The highest probability of all particles
 ![](images/ddsist.png)
 
 Plot of ddist
-
