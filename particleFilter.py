@@ -29,7 +29,7 @@ def calculateDdist(particle, anchorMap):
             continue
 
         # Euclidean distance differnece from with regards to the ref_anchor
-        ddist = math.sqrt((pos['x']-particle[0]**2)**2 + (pos['y']-particle[1]**2)**2 + (pos['z']-particle[2]**2)**2)
+        ddist = math.sqrt((pos['x']-particle[0])**2 + (pos['y']-particle[1])**2 + (pos['z']-particle[2])**2)
         ddist = ddist - refAnchorDist
         ddistDict[anchor] = ddist
     
@@ -286,7 +286,7 @@ def main():
 
 
     # Number of particles 
-    numParticles = 1000
+    numParticles = 100
 
     # Between what coordinates the particles should be initialized 
     xAnchor = []

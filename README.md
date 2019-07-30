@@ -40,3 +40,20 @@ If all anchors are in or close to be in the same plane, the tag will have a good
 ![](images/particle.gif)
 
 The tag is hanging slightly above the plane the anchors are in. Blue points are anchors, red are the estimated states "particles" and the green is the particle with the highest probability
+
+![](images/trace.gif)
+
+The path using 100 particles. The big jump from above and belove the plane of anchors is due to that the anchors are all placed in a plane (or close to), which lead to that there will exist two possible maxima of particles. As can be seen in the graph of variance for the z axis. The trace in the xy plane is quite close to the "true" movement.
+
+![](images/varxyz.png)
+
+Variance in xyz 
+
+![](images/highprob.png)
+
+The highest probability of all particles
+
+![](images/ddsist.png)
+
+Plot of ddist
+
