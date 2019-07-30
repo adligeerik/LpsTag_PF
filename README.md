@@ -53,6 +53,6 @@ Variance in xyz
 
 The highest probability of all particles
 
-![](images/ddsist.png)
+![](images/ddist.png)
 
 Plot of ddist
