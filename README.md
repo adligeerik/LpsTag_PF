@@ -1,4 +1,4 @@
-# Particle filter for lps tag (proof of concept)
+# Particle filter for lps tag
 
 # How to use
 To run the particle filter use:
