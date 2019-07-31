@@ -37,7 +37,7 @@ If all anchors are in or close to be in the same plane, the tag will have a good
 
 ## Results
 
-![](images/particle.gif)
+![](images/dotparticles.gif)
 
 The tag is hanging slightly above the plane the anchors are in. Blue points are anchors, red are the estimated states "particles" and the green is the particle with the highest probability
 

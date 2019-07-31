@@ -64,9 +64,9 @@ def moveParticles(particles,acceleration,timestamp):
     varAcc = 1
 
     for particle in particles:
-        particle[0] = particle[0] + dx + gauss(0,varAcc)/10
-        particle[1] = particle[1] + dy + gauss(0,varAcc)/10
-        particle[2] = particle[2] + dz + gauss(0,varAcc)/10
+        particle[0] = particle[0] + dx + gauss(0,varAcc)/15
+        particle[1] = particle[1] + dy + gauss(0,varAcc)/15
+        particle[2] = particle[2] + dz + gauss(0,varAcc)/15
 
 
 ''' Update map in particles'''
@@ -235,6 +235,7 @@ The most likely position of the tag given all the particles'''
 def bestPos(particles):
     #mu = highestWeight(particles)
     mu = meanPos(particles)
+    #mu = weightedAverage(particles)
     return mu
 
 ''' Particle filter '''
@@ -303,8 +304,8 @@ def main():
     "minx":min(xAnchor)*1.2,
     "maxy":max(yAnchor)*1.2,
     "miny":min(yAnchor)*1.2,
-    "maxz":max(zAnchor)*1.2,
-    "minz":min(zAnchor)*1.2,
+    "maxz":max(zAnchor)*1.2+1,
+    "minz":min(zAnchor)*1.2-1.5,
     }
 
     # Init particles
@@ -357,16 +358,16 @@ def main():
             continue
         
         # Draw anchors
-        #for i, anchor in enumerate(anchorMap):
-        #    ax.scatter(anchorMap[anchor]["x"],anchorMap[anchor]["y"],anchorMap[anchor]["z"], c='blue')
-        #    ax.text(anchorMap[anchor]["x"],anchorMap[anchor]["y"],anchorMap[anchor]["z"], anchor)
+        for i, anchor in enumerate(anchorMap):
+            ax.scatter(anchorMap[anchor]["x"],anchorMap[anchor]["y"],anchorMap[anchor]["z"], c='blue')
+            ax.text(anchorMap[anchor]["x"],anchorMap[anchor]["y"],anchorMap[anchor]["z"], anchor)
         
         # Call the particle filter
         (particles,mu,pHighest) = particleFilter(particles,anchorMap,dataPackage)
         
         # Display the particles
-        #for particle in particles:
-        #    ax.scatter(particle[0],particle[1],particle[2], c='red')
+        npParticle = np.array(particles).transpose()
+        ax.plot(npParticle[0],npParticle[1],npParticle[2],'.', c='red')
 
         xpos = []
         ypos = []
@@ -381,7 +382,7 @@ def main():
 
         print("Variance, x: "+str(xvar)+", y: "+str(yvar)+", z: "+str(zvar))
 
-        #ax.scatter(mu["x"],mu["y"],mu["z"], c='green')
+        ax.scatter(mu["x"],mu["y"],mu["z"], c='green')
 
         coord[0].append(mu["x"])
         coord[1].append(mu["y"])
@@ -402,11 +403,15 @@ def main():
 
     tagdata.close()
 
+    ax.set_xlim3d(xmean-span,xmean+span)
+    ax.set_ylim3d(ymean-span,ymean+span)
+    ax.set_zlim3d(zmean-span,zmean+span)
+
     for i, anchor in enumerate(anchorMap):
         ax.scatter(anchorMap[anchor]["x"],anchorMap[anchor]["y"],anchorMap[anchor]["z"], c='blue')
         ax.text(anchorMap[anchor]["x"],anchorMap[anchor]["y"],anchorMap[anchor]["z"], anchor)
 
-    ax.plot(coord[0],coord[1],coord[2], c='green')
+    ax.plot(coord[0],coord[1],coord[2],'.', c='green')
     fig.canvas.draw()
 
     fig1 = plt.figure()
