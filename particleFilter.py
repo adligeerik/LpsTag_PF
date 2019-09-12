@@ -14,7 +14,7 @@ import copy
 
 
 def calculateDdist(particle, anchorMap):
-    # Distance to the ref_anchor (ref_ancor is in 0,0,0 by deffenition)
+    # Distance to the ref_anchor (ref_ancor is in 0,0,0 by definition)
 
     ddistDict = {}
     refAnchorDist = math.sqrt(particle[0]**2 + particle[1]**2 + particle[2]**2)
@@ -426,5 +426,6 @@ def main():
     ax2.plot(pHigh,label="highest probability")
     ax2.legend()
     #fig1.show()
-    
-main()
+
+if __name__ == "__main__":
+    main()
